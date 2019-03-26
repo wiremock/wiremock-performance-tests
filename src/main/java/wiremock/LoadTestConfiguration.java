@@ -31,12 +31,14 @@ public class LoadTestConfiguration {
     private Integer port;
     private int durationSeconds;
     private int rate;
+    private int rampSeconds;
 
     public static LoadTestConfiguration fromEnvironment() {
         String host = System.getenv("HOST");
         Integer port = envInt("PORT", null);
-        int durationSeconds = envInt("DURATION_SECONDS", 10);
+        int durationSeconds = envInt("DURATION_SECONDS", 30);
         int rate = envInt("RATE", 200);
+        int rampSeconds = envInt("RAMP_SECONDS", 10);
 
         return new LoadTestConfiguration(host, port, durationSeconds, rate);
     }
@@ -272,6 +274,10 @@ public class LoadTestConfiguration {
 
     public int getRate() {
         return rate;
+    }
+
+    public int getRampSeconds() {
+        return rampSeconds;
     }
 
     public static final String POSTED_JSON = "{\n" +

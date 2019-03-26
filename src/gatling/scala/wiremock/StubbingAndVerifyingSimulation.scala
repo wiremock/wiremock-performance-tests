@@ -105,7 +105,10 @@ class StubbingAndVerifyingSimulation extends Simulation {
   setUp(
 //    mixed100StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
 //    onlyGet6000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
-    onlyPost1000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
+    onlyPost1000StubScenario.inject(
+      rampUsers(loadTestConfiguration.getRate) over (loadTestConfiguration.getRampSeconds seconds),
+      constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
+    )
 //    getLargeStubsScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
   ).protocols(httpConf)
 
