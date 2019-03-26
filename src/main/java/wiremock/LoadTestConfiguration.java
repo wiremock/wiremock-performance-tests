@@ -117,6 +117,40 @@ public class LoadTestConfiguration {
         executorService.shutdown();
     }
 
+    public void onlyPost1000StubScenario() {
+        System.out.println("Registering stubs");
+
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
+
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 1; i <= 1000; i++) {
+            final int count = i;
+            futures.add(executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    wm.register(post("/webhooks/customer/" + count)
+                            .willReturn(okJson("{\"customer\":\"Customer: 993\",\"response\":\"Acknowledgement\"}")));
+
+                    if (count % 100 == 0) {
+                        System.out.print(count + " ");
+                    }
+
+                }
+            }));
+
+        }
+
+        for (Future<?> future: futures) {
+            try {
+                future.get(30, SECONDS);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        executorService.shutdown();
+    }
+
     public void getLargeStubScenario() {
         System.out.println("Registering stubs");
 

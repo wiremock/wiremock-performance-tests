@@ -15,7 +15,8 @@ class StubbingAndVerifyingSimulation extends Simulation {
     loadTestConfiguration.before()
 //    loadTestConfiguration.mixed100StubScenario()
 //    loadTestConfiguration.onlyGet6000StubScenario()
-    loadTestConfiguration.getLargeStubScenario()
+    loadTestConfiguration.onlyPost1000StubScenario()
+//    loadTestConfiguration.getLargeStubScenario()
   }
 
   after {
@@ -81,6 +82,16 @@ class StubbingAndVerifyingSimulation extends Simulation {
       }
   }
 
+  val onlyPost1000StubScenario = {
+    scenario("1000 POSTs")
+      .repeat(1) {
+        exec(http("POSTs")
+          .post(session => s"webhooks/customer/${random.nextInt(999) + 1}")
+          .header("Accept", "application/json")
+          .check(status.is(200)))
+      }
+  }
+
   val getLargeStubsScenario = {
     scenario("100 large GETs")
       .repeat(1) {
@@ -94,7 +105,8 @@ class StubbingAndVerifyingSimulation extends Simulation {
   setUp(
 //    mixed100StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
 //    onlyGet6000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
-    getLargeStubsScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
+    onlyPost1000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
+//    getLargeStubsScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
   ).protocols(httpConf)
 
 }
