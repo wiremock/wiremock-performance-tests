@@ -15,8 +15,8 @@ repositories {
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
     compile 'io.gatling.highcharts:gatling-charts-highcharts:2.3.0'
-    compile 'com.github.tomakehurst:wiremock:2.20.0'
-    gatlingCompile 'com.github.tomakehurst:wiremock:2.20.0'
+    compile 'com.github.tomakehurst:wiremock:2.25.0'
+    gatlingCompile 'com.github.tomakehurst:wiremock:2.25.0'
 }
 
 task wrapper(type: Wrapper) {
