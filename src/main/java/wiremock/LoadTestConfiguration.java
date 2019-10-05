@@ -265,7 +265,7 @@ public class LoadTestConfiguration {
     }
 
     public String getBaseUrl() {
-        return String.format("http://%s:%d/", host, port);
+        return String.format("https://%s:%d/", host, port);
     }
 
     public int getDurationSeconds() {

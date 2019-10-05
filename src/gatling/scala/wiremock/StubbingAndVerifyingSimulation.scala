@@ -25,6 +25,7 @@ class StubbingAndVerifyingSimulation extends Simulation {
 
   val httpConf = http
     .baseURL(loadTestConfiguration.getBaseUrl)
+    .shareConnections
 
   val mixed100StubScenario = {
 
@@ -70,7 +71,7 @@ class StubbingAndVerifyingSimulation extends Simulation {
 
   val onlyGet6000StubScenario = {
     scenario("6000 GETs")
-      .repeat(1) {
+      .repeat(10) {
         exec(http("GETs")
           .get(session => s"load-test/${random.nextInt(5999) + 1}")
           .header("Accept", "text/plain+stuff")
@@ -104,11 +105,11 @@ class StubbingAndVerifyingSimulation extends Simulation {
 
   setUp(
 //    mixed100StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
-//    onlyGet6000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
-    onlyPost1000StubScenario.inject(
-      rampUsers(loadTestConfiguration.getRate) over (loadTestConfiguration.getRampSeconds seconds),
-      constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
-    )
+    onlyGet6000StubScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
+//    onlyPost1000StubScenario.inject(
+//      rampUsers(loadTestConfiguration.getRate) over (loadTestConfiguration.getRampSeconds seconds),
+//      constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
+//    )
 //    getLargeStubsScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
   ).protocols(httpConf)
 
