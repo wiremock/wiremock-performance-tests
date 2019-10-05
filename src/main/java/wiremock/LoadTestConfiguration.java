@@ -27,6 +27,7 @@ public class LoadTestConfiguration {
     private WireMockServer wireMockServer;
     private WireMock wm;
 
+    private String scheme;
     private String host;
     private Integer port;
     private int durationSeconds;
@@ -34,13 +35,17 @@ public class LoadTestConfiguration {
     private int rampSeconds;
 
     public static LoadTestConfiguration fromEnvironment() {
+        String scheme = System.getenv("SCHEME");
+        if (scheme == null) {
+            scheme = "http";
+        }
         String host = System.getenv("HOST");
         Integer port = envInt("PORT", null);
         int durationSeconds = envInt("DURATION_SECONDS", 30);
         int rate = envInt("RATE", 200);
         int rampSeconds = envInt("RAMP_SECONDS", 10);
 
-        return new LoadTestConfiguration(host, port, durationSeconds, rate);
+        return new LoadTestConfiguration(scheme, host, port, durationSeconds, rate);
     }
 
     private static Integer envInt(String key, Integer defaultValue) {
@@ -49,10 +54,10 @@ public class LoadTestConfiguration {
     }
 
     public LoadTestConfiguration() {
-        this(null, null, 10, 200);
+        this(null, null, null, 10, 200);
     }
 
-    public LoadTestConfiguration(String host, Integer port, int durationSeconds, int rate) {
+    public LoadTestConfiguration(String scheme, String host, Integer port, int durationSeconds, int rate) {
         System.out.println("Running test against host " + host + ", for " + durationSeconds + " seconds at rate " + rate);
 
         if (host == null || port == null) {
@@ -70,7 +75,8 @@ public class LoadTestConfiguration {
         } else {
             this.host = host;
             this.port = port;
-            wm = new WireMock(host, port);
+            this.scheme = scheme;
+            wm = new WireMock(scheme, host, port);
         }
 
         this.durationSeconds = durationSeconds;
@@ -78,6 +84,7 @@ public class LoadTestConfiguration {
     }
 
     public void before() {
+        System.out.println("Running against: " + getBaseUrl());
         wm.resetToDefaultMappings();
     }
 
@@ -256,6 +263,10 @@ public class LoadTestConfiguration {
         }
     }
 
+    public String getScheme() {
+        return scheme;
+    }
+
     public String getHost() {
         return host != null ? host : "localhost";
     }
@@ -265,7 +276,7 @@ public class LoadTestConfiguration {
     }
 
     public String getBaseUrl() {
-        return String.format("https://%s:%d/", host, port);
+        return String.format("%s://%s:%d/", scheme, host, port);
     }
 
     public int getDurationSeconds() {
