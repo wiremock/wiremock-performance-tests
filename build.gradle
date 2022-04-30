@@ -9,14 +9,17 @@ apply plugin: 'scala'
 repositories {
     mavenLocal()
     mavenCentral()
-    jcenter()
 }
+
+def versions = [
+    wiremock: '2.33.2'
+]
 
 dependencies {
     compile 'org.scala-lang:scala-library:2.11.8'
     compile 'io.gatling.highcharts:gatling-charts-highcharts:2.3.0'
-    compile 'com.github.tomakehurst:wiremock:2.25.0'
-    gatlingCompile 'com.github.tomakehurst:wiremock:2.25.0'
+    compile "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
+    gatlingCompile "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
 }
 
 task wrapper(type: Wrapper) {

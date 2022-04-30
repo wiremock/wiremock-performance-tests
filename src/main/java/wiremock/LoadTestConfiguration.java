@@ -2,6 +2,7 @@ package wiremock;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.common.Json;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import com.github.tomakehurst.wiremock.core.Admin;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
@@ -10,7 +11,12 @@ import com.github.tomakehurst.wiremock.global.GlobalSettings;
 import com.github.tomakehurst.wiremock.http.DelayDistribution;
 import com.github.tomakehurst.wiremock.http.UniformDistribution;
 import com.github.tomakehurst.wiremock.junit.Stubbing;
+import com.github.tomakehurst.wiremock.stubbing.StubImport;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Files;
+import com.google.common.io.Resources;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -19,6 +25,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.stubbing.StubImport.stubImport;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAscii;
 
@@ -40,7 +47,7 @@ public class LoadTestConfiguration {
             scheme = "http";
         }
         String host = System.getenv("HOST");
-        Integer port = envInt("PORT", null);
+        Integer port = envInt("PORT", 0);
         int durationSeconds = envInt("DURATION_SECONDS", 30);
         int rate = envInt("RATE", 200);
         int rampSeconds = envInt("RAMP_SECONDS", 10);
@@ -67,10 +74,13 @@ public class LoadTestConfiguration {
                     .asynchronousResponseEnabled(true)
                     .asynchronousResponseThreads(50)
                     .containerThreads(50)
-                    .maxRequestJournalEntries(1000)
+                    .maxRequestJournalEntries(200)
                     .notifier(new Slf4jNotifier(false))
                     .extensions(new ResponseTemplateTransformer(false)));
             wireMockServer.start();
+            this.host = "localhost";
+            this.port = wireMockServer.port();
+            this.scheme = "http";
             wm = new WireMock(wireMockServer);
         } else {
             this.host = host;
@@ -88,12 +98,24 @@ public class LoadTestConfiguration {
         wm.resetToDefaultMappings();
     }
 
+    public void tiketSoapTemplateStubs() {
+        try {
+            String importJson = new String(ByteStreams.toByteArray(Resources.getResource("tiket-soap-stubs.json").openStream()));
+            wm.importStubMappings(Json.read(importJson, StubImport.class));
+
+            System.out.println("Loaded " + wm.allStubMappings().getMappings().size() + " stubs");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void onlyGet6000StubScenario() {
         System.out.println("Registering stubs");
 
         ExecutorService executorService = Executors.newFixedThreadPool(100);
 
         wm.register(any(anyUrl()).atPriority(10)
+            .persistent(false)
             .willReturn(notFound())
         );
 
@@ -104,6 +126,7 @@ public class LoadTestConfiguration {
                 @Override
                 public void run() {
                     wm.register(get("/load-test/" + count)
+                            .persistent(false)
                             .willReturn(ok(randomAscii(2000, 5000))));
 
                     if (count % 100 == 0) {
@@ -138,6 +161,7 @@ public class LoadTestConfiguration {
                 @Override
                 public void run() {
                     wm.register(post("/webhooks/customer/" + count)
+                            .persistent(false)
                             .willReturn(okJson("{\"customer\":\"Customer: 993\",\"response\":\"Acknowledgement\"}")));
 
                     if (count % 100 == 0) {
@@ -166,6 +190,7 @@ public class LoadTestConfiguration {
         ExecutorService executorService = Executors.newFixedThreadPool(10);
 
         wm.register(any(anyUrl()).atPriority(10)
+                .persistent(false)
                 .willReturn(notFound())
         );
 
@@ -176,6 +201,7 @@ public class LoadTestConfiguration {
                 @Override
                 public void run() {
                     wm.register(get("/load-test/" + count)
+                            .persistent(false)
                             .willReturn(ok(randomAscii(50000, 90000))));
 
                     if (count % 100 == 0) {
@@ -205,6 +231,7 @@ public class LoadTestConfiguration {
         // Basic GET
         for (int i = 1; i <= 50; i++) {
             wm.register(get("/load-test/" + i)
+                .persistent(false)
                 .withHeader("Accept", containing("text/plain"))
                 .willReturn(ok(randomAscii(1, 2000))));
         }
@@ -212,6 +239,7 @@ public class LoadTestConfiguration {
         // POST JSON equality
         for (int i = 1; i <= 10; i++) {
             wm.register(post("/load-test/json")
+                .persistent(false)
                 .withHeader("Accept", equalTo("text/plain"))
                 .withHeader("Content-Type", matching(".*/json"))
                 .withRequestBody(equalToJson(POSTED_JSON))
@@ -221,6 +249,7 @@ public class LoadTestConfiguration {
         // POST JSONPath
         for (int i = 1; i <= 10; i++) {
             wm.register(post("/load-test/jsonpath")
+                .persistent(false)
                 .withHeader("Content-Type", equalTo("application/json"))
                 .withRequestBody(matchingJsonPath("$.matchThis.inner.innermost", equalTo("42")))
                 .willReturn(created()));
@@ -229,6 +258,7 @@ public class LoadTestConfiguration {
         // POST XML equality
         for (int i = 1; i <= 2; i++) {
             wm.register(post("/load-test/xml")
+                .persistent(false)
                 .withHeader("Content-Type", matching(".*/xml.*"))
                 .withRequestBody(equalToXml(POSTED_XML.replace("$1", String.valueOf(i))))
                 .willReturn(ok(randomAscii(i * 200))));
@@ -237,6 +267,7 @@ public class LoadTestConfiguration {
         // POST XML XPath
         for (int i = 1; i <= 10; i++) {
             wm.register(post("/load-test/xpath")
+                .persistent(false)
                 .withHeader("Content-Type", matching(".*/xml.*"))
 //                .withRequestBody(matchingXPath("//description[@subject = 'JWT']/text()", containing("JSON Web Token")))
                 .withRequestBody(matchingXPath("//description/text()", containing("JSON Web Token")))
@@ -246,13 +277,14 @@ public class LoadTestConfiguration {
         // POST text body regex
         for (int i = 1; i <= 10; i++) {
             wm.register(post("/load-test/text")
+                .persistent(false)
                 .withHeader("Content-Type", matching(".*text/plain.*"))
                 .withRequestBody(matching(".*[0-9]{5}.*"))
                 .willReturn(ok(randomAscii(i * 200))));
         }
 
-        // TODO: Response templating
         wm.register(put("/load-test/templated")
+            .persistent(false)
             .willReturn(ok(TEMPLATED_RESPONSE).withTransformers("response-template")));
 
     }
