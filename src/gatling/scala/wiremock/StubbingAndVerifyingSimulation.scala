@@ -71,7 +71,7 @@ class StubbingAndVerifyingSimulation extends Simulation {
 
   val onlyGet6000StubScenario = {
     scenario("6000 GETs")
-      .repeat(10) {
+      .repeat(1) {
         exec(http("GETs")
           .get(session => s"load-test/${random.nextInt(5999) + 1}")
           .header("Accept", "text/plain+stuff")
