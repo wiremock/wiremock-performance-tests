@@ -1,5 +1,7 @@
+import io.gatling.gradle.GatlingRunTask
+
 plugins {
-    id "com.github.lkishalmi.gatling" version "0.7.1"
+    id 'io.gatling.gradle' version '3.6.1'
 }
 
 apply plugin: 'idea'
@@ -12,20 +14,22 @@ repositories {
 }
 
 def versions = [
-    wiremock: '2.33.2'
+    wiremock: '2.34.0'
 ]
 
 dependencies {
-    compile 'org.scala-lang:scala-library:2.11.8'
-    compile 'io.gatling.highcharts:gatling-charts-highcharts:2.3.0'
-    compile "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
-    gatlingCompile "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
+    implementation "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
+    gatling "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+task manyGets(type: GatlingRunTask) {
+    simulations { include "**/ManyGetsSimulation.scala" }
 }
 
-gatling {
-    simulations { include "**/*Simulation.scala" }
+task templateCaching(type: GatlingRunTask) {
+    simulations { include "**/TemplateCachingSimulation.scala" }
+}
+
+task mixed100(type: GatlingRunTask) {
+    simulations { include "**/Mixed100Simulation.scala" }
 }

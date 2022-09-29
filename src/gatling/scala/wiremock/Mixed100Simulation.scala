@@ -6,7 +6,7 @@ import io.gatling.http.Predef._
 import scala.concurrent.duration._
 import scala.language.postfixOps
 
-class StubbingAndVerifyingSimulation extends Simulation {
+class Mixed100Simulation extends Simulation {
 
   val loadTestConfiguration = LoadTestConfiguration.fromEnvironment()
 
@@ -14,10 +14,7 @@ class StubbingAndVerifyingSimulation extends Simulation {
 
   before {
     loadTestConfiguration.before()
-//    loadTestConfiguration.mixed100StubScenario()
-    loadTestConfiguration.onlyGet6000StubScenario()
-//    loadTestConfiguration.onlyPost1000StubScenario()
-//    loadTestConfiguration.getLargeStubScenario()
+    loadTestConfiguration.mixed100StubScenario()
   }
 
   after {
@@ -70,54 +67,10 @@ class StubbingAndVerifyingSimulation extends Simulation {
               .check(status.is(200)))
   }
 
-  val onlyGet6000StubScenario = {
-    scenario("6000 GETs")
-      .repeat(1) {
-        exec(http("GETs")
-          .get(session => s"load-test/${random.nextInt(5999) + 1}")
-          .header("Accept", "text/plain+stuff")
-          .check(status.is(200)))
-        .exec(http("Not founds")
-          .get(session => s"load-test/${random.nextInt(5999) + 7000}")
-          .header("Accept", "text/plain+stuff")
-          .check(status.is(404)))
-      }
-  }
-
-  val onlyPost1000StubScenario = {
-    scenario("1000 POSTs")
-      .repeat(1) {
-        exec(http("POSTs")
-          .post(session => s"webhooks/customer/${random.nextInt(999) + 1}")
-          .header("Accept", "application/json")
-          .check(status.is(200)))
-      }
-  }
-
-  val getLargeStubsScenario = {
-    scenario("100 large GETs")
-      .repeat(1) {
-        exec(http("GETs")
-          .get(session => s"load-test/${random.nextInt(99) + 1}")
-          .header("Accept", "text/plain+stuff")
-          .check(status.is(200)))
-      }
-  }
-
   setUp(
-//    mixed100StubScenario.inject(
-//      rampUsers(loadTestConfiguration.getRate) over (loadTestConfiguration.getRampSeconds seconds),
-//      constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
-//    )
-    onlyGet6000StubScenario.inject(
+    mixed100StubScenario.inject(
       rampUsers(loadTestConfiguration.getRate).during(loadTestConfiguration.getRampSeconds seconds),
       constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
     )
-//    onlyPost1000StubScenario.inject(
-//      rampUsers(loadTestConfiguration.getRate) over (loadTestConfiguration.getRampSeconds seconds),
-//      constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds)
-//    )
-//    getLargeStubsScenario.inject(constantUsersPerSec(loadTestConfiguration.getRate) during(loadTestConfiguration.getDurationSeconds seconds))
   ).protocols(httpConf)
-
 }

@@ -65,9 +65,10 @@ public class LoadTestConfiguration {
     }
 
     public LoadTestConfiguration(String scheme, String host, Integer port, int durationSeconds, int rate) {
-        System.out.println("Running test against host " + host + ", for " + durationSeconds + " seconds at rate " + rate);
+        System.out.println("Running for " + durationSeconds + " seconds at rate " + rate);
 
         if (host == null || port == null) {
+            System.out.println("Target: local WireMock server");
             wireMockServer = new WireMockServer(WireMockConfiguration.options()
                     .dynamicPort()
                     .dynamicHttpsPort()
@@ -83,6 +84,7 @@ public class LoadTestConfiguration {
             this.scheme = "http";
             wm = new WireMock(wireMockServer);
         } else {
+            System.out.println("Target: " + scheme + "://" + host + ": " + port);
             this.host = host;
             this.port = port;
             this.scheme = scheme;
@@ -96,17 +98,6 @@ public class LoadTestConfiguration {
     public void before() {
         System.out.println("Running against: " + getBaseUrl());
         wm.resetToDefaultMappings();
-    }
-
-    public void tiketSoapTemplateStubs() {
-        try {
-            String importJson = new String(ByteStreams.toByteArray(Resources.getResource("tiket-soap-stubs.json").openStream()));
-            wm.importStubMappings(Json.read(importJson, StubImport.class));
-
-            System.out.println("Loaded " + wm.allStubMappings().getMappings().size() + " stubs");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     public void onlyGet6000StubScenario() {
