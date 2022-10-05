@@ -18,18 +18,25 @@ def versions = [
 ]
 
 dependencies {
-    implementation "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
-    gatling "com.github.tomakehurst:wiremock-jre8:$versions.wiremock"
+    implementation "com.github.tomakehurst:wiremock-jre8:$versions.wiremock", {
+        exclude(group: 'org.slf4j')
+    }
+    gatling "com.github.tomakehurst:wiremock-jre8:$versions.wiremock", {
+        exclude(group: 'org.slf4j')
+    }
 }
 
 task manyGets(type: GatlingRunTask) {
     simulations { include "**/ManyGetsSimulation.scala" }
 }
+manyGets.dependsOn(processGatlingResources, compileGatlingJava, compileGatlingScala)
 
 task templateCaching(type: GatlingRunTask) {
     simulations { include "**/TemplateCachingSimulation.scala" }
 }
+templateCaching.dependsOn(processGatlingResources, compileGatlingJava, compileGatlingScala)
 
 task mixed100(type: GatlingRunTask) {
     simulations { include "**/Mixed100Simulation.scala" }
 }
+mixed100.dependsOn(processGatlingResources, compileGatlingJava, compileGatlingScala)
