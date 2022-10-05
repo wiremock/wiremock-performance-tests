@@ -53,3 +53,6 @@ tmp*
 
 src/main/resources/swagger
 docs-v2/_docs/wiremock-admin-api.html
+copy-to-host.sh
+pull-reports-from-host.sh
+reports
