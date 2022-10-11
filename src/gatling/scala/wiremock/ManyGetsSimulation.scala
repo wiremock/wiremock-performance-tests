@@ -23,7 +23,6 @@ class ManyGetsSimulation extends Simulation {
 
   val httpConf = http
     .baseUrl(loadTestConfiguration.getBaseUrl)
-    .header("Host", "qa-load-test.mockapi.cloud")
     .shareConnections
 
   val manyGetsScenario = {

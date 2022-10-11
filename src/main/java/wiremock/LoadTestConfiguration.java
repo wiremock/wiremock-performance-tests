@@ -82,7 +82,6 @@ public class LoadTestConfiguration {
                     .host(host)
                     .port(port)
                     .scheme(scheme)
-                    .hostHeader("qa-load-test.mockapi.cloud")
                     .build();
         }
 
