@@ -15,7 +15,7 @@ class StubbingAndVerifyingSimulation extends Simulation {
   before {
     loadTestConfiguration.before()
 //    loadTestConfiguration.mixed100StubScenario()
-    loadTestConfiguration.onlyGet6000StubScenario()
+    loadTestConfiguration.manyStubGetScenario()
 //    loadTestConfiguration.onlyPost1000StubScenario()
 //    loadTestConfiguration.getLargeStubScenario()
   }

@@ -14,7 +14,7 @@ class ManyGetsSimulation extends Simulation {
 
   before {
     loadTestConfiguration.before()
-    loadTestConfiguration.onlyGet6000StubScenario()
+    loadTestConfiguration.manyStubGetScenario()
   }
 
   after {
@@ -23,26 +23,31 @@ class ManyGetsSimulation extends Simulation {
 
   val httpConf = http
     .baseUrl(loadTestConfiguration.getBaseUrl)
+    .header("Host", "qa-load-test.mockapi.cloud")
     .shareConnections
 
-  val onlyGet6000StubScenario = {
-    scenario("6000 GETs")
+  val manyGetsScenario = {
+    scenario(s"${loadTestConfiguration.getStubCount} GETs")
       .repeat(1) {
         exec(http("GETs")
-          .get(session => s"load-test/${random.nextInt(5999) + 1}")
+          .get(session => s"load-test/${random.nextInt(loadTestConfiguration.getStubCount - 1) + 1}")
           .header("Accept", "text/plain+stuff")
           .check(status.is(200)))
         .exec(http("Not founds")
-          .get(session => s"load-test/${random.nextInt(5999) + 7000}")
+          .get(session => s"load-test/${random.nextInt(loadTestConfiguration.getStubCount - 1) + 7000}")
           .header("Accept", "text/plain+stuff")
           .check(status.is(404)))
       }
   }
 
   setUp(
-    onlyGet6000StubScenario.inject(
-      rampUsers(loadTestConfiguration.getRate).during(loadTestConfiguration.getRampSeconds seconds),
+    manyGetsScenario.inject(
       constantUsersPerSec(loadTestConfiguration.getRate).during(loadTestConfiguration.getDurationSeconds seconds)
     )
-  ).protocols(httpConf)
+  )
+  .throttle(
+    reachRps(loadTestConfiguration.getRate).in(loadTestConfiguration.getRampSeconds seconds),
+    holdFor(loadTestConfiguration.getDurationSeconds seconds)
+  )
+  .protocols(httpConf)
 }

@@ -2,30 +2,18 @@ package wiremock;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
-import com.github.tomakehurst.wiremock.common.Json;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
-import com.github.tomakehurst.wiremock.core.Admin;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.extension.responsetemplating.ResponseTemplateTransformer;
-import com.github.tomakehurst.wiremock.global.GlobalSettings;
-import com.github.tomakehurst.wiremock.http.DelayDistribution;
 import com.github.tomakehurst.wiremock.http.UniformDistribution;
-import com.github.tomakehurst.wiremock.junit.Stubbing;
-import com.github.tomakehurst.wiremock.stubbing.StubImport;
-import com.google.common.io.ByteStreams;
-import com.google.common.io.Files;
-import com.google.common.io.Resources;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static com.github.tomakehurst.wiremock.stubbing.StubImport.stubImport;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.RandomStringUtils.randomAscii;
 
@@ -40,6 +28,8 @@ public class LoadTestConfiguration {
     private int durationSeconds;
     private int rate;
     private int rampSeconds;
+
+    private Integer stubCount = 6000;
 
     public static LoadTestConfiguration fromEnvironment() {
         String scheme = System.getenv("SCHEME");
@@ -88,7 +78,12 @@ public class LoadTestConfiguration {
             this.host = host;
             this.port = port;
             this.scheme = scheme;
-            wm = new WireMock(scheme, host, port);
+            wm = WireMock.create()
+                    .host(host)
+                    .port(port)
+                    .scheme(scheme)
+                    .hostHeader("qa-load-test.mockapi.cloud")
+                    .build();
         }
 
         this.durationSeconds = durationSeconds;
@@ -100,10 +95,10 @@ public class LoadTestConfiguration {
         wm.resetToDefaultMappings();
     }
 
-    public void onlyGet6000StubScenario() {
+    public void manyStubGetScenario() {
         System.out.println("Registering stubs");
 
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+        ExecutorService executorService = Executors.newFixedThreadPool(20);
 
         wm.register(any(anyUrl()).atPriority(10)
             .persistent(false)
@@ -111,7 +106,7 @@ public class LoadTestConfiguration {
         );
 
         List<Future<?>> futures = new ArrayList<>();
-        for (int i = 1; i <= 6000; i++) {
+        for (int i = 1; i <= stubCount; i++) {
             final int count = i;
             futures.add(executorService.submit(new Runnable() {
                 @Override
@@ -312,6 +307,10 @@ public class LoadTestConfiguration {
 
     public int getRampSeconds() {
         return rampSeconds;
+    }
+
+    public Integer getStubCount() {
+        return stubCount;
     }
 
     public static final String POSTED_JSON = "{\n" +
